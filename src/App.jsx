@@ -137,8 +137,14 @@ const Service = {
           : ['artifacts', rootPath, 'public', 'data', 'trips'];
         
         const colRef = collection(Service.db, ...path);
-        if (action === 'add') await addDoc(colRef, { ...data, createdAt: serverTimestamp() });
-        else if (action === 'update') await updateDoc(doc(colRef, id), data);
+
+        // 修正：Firestore 不支援 undefined，這裡自動過濾掉 undefined 的欄位
+        const cleanData = data ? Object.fromEntries(
+          Object.entries(data).filter(([_, v]) => v !== undefined)
+        ) : data;
+
+        if (action === 'add') await addDoc(colRef, { ...cleanData, createdAt: serverTimestamp() });
+        else if (action === 'update') await updateDoc(doc(colRef, id), cleanData);
         else if (action === 'delete') await deleteDoc(doc(colRef, id));
         return true; 
       } catch (e) { 
